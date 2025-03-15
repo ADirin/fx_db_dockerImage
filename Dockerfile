@@ -1,25 +1,35 @@
-# Use an official OpenJDK image as the base
 FROM openjdk:21-jdk-slim
+ENV DISPLAY=host.docker.internal:0.0
 
-# Set the working directory
-WORKDIR /app
-
-# Copy the Maven build files into the container
-COPY pom.xml .
-
-# Install Maven (if necessary, as we'll use Maven to build the app)
+# Install required dependencies
 RUN apt-get update && \
-    apt-get install -y maven && \
+    apt-get install -y maven wget unzip \
+    libgtk-3-0 libgbm1 libx11-6 && \
     apt-get clean
 
-# Copy the whole project into the container
-COPY . .
+# Download and install JavaFX SDK
+RUN wget https://download2.gluonhq.com/openjfx/21/openjfx-21_linux-x64_bin-sdk.zip -O /tmp/openjfx.zip && \
+    unzip /tmp/openjfx.zip -d /opt && \
+    rm /tmp/openjfx.zip
 
-# Build the JavaFX application
+# List the contents of /opt to confirm where the JavaFX SDK was extracted
+RUN ls -l /opt
+
+# Set working directory
+WORKDIR /app
+
+# Copy the project files into the container
+COPY pom.xml /app/
+COPY src /app/src
+
+# Build the application (with dependencies bundled into the JAR)
 RUN mvn clean package -DskipTests
 
-# Expose the necessary port if your application is web-based (or just to be sure)
-EXPOSE 8080
+# List contents of target folder to ensure the JAR is created
+RUN ls -l target/
 
-# Run the application
-CMD ["java", "-jar", "target/demo-1.0-SNAPSHOT.jar"]
+# List contents of the JavaFX SDK to ensure correct extraction
+RUN ls -l /opt/javafx-sdk-21 || ls -l /opt
+
+# Set the command to run the JavaFX application with the correct module path
+CMD ["java", "--module-path", "/opt/javafx-sdk-21/lib", "--add-modules", "javafx.controls,javafx.fxml", "-jar", "target/demo.jar"]

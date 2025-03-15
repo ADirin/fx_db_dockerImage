@@ -8,6 +8,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+import static java.util.Locale.US;
 
 public class HelloController {
     @FXML
@@ -48,6 +52,10 @@ public class HelloController {
         } else {
             lbl.setText("Translation not found!");
         }
+     //Here is direct without database
+        //   Locale localeObj = new Locale("en","US");
+      //  ResourceBundle resourceBundle = ResourceBundle.getBundle("message", localeObj);
+      //  lbl.setText(resourceBundle.getString("greeting"));
     }
 
 
